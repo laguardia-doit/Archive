@@ -28,6 +28,7 @@ import {
   ChevronRight, 
   ChevronLeft,
   Calendar,
+  BookOpen,
   Map as MapIcon,
   FileText,
   Building2,
@@ -47,6 +48,7 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  Linkedin,
   ChevronDown,
   Heart,
   Lock,
@@ -180,35 +182,33 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
       type: 'mega',
       columns: [
         {
-          title: 'LGBTQ+',
+          title: 'LGBTQ+ History',
           items: [
             'An LGBTQ+ New York Worth Fighting For',
             'The Battle for Intro. 2',
             'A Seat At The Table',
             'Children Of The Rainbow Exhibit',
-            'Next Stop Queer New York (EN)',
-            'Next Stop Queer New York (ES)',
+            'Next Stop Queer New York',
             'Shades of the Rainbow',
             'Rainbow LaGuardia'
           ]
         },
         {
-          title: 'NYC History',
+          title: 'Calendars & Series',
           items: [
+            '2026 Gems of Queens',
             'Gotham Transformed',
-            'Making it here: Women in NYC Politics',
-            'Women In Government',
-            '9/11 through the eyes of LaGuardia students',
-            'Portraits of an Epicenter: NYC in Lockdown'
+            '9/11 Collections',
+            'Portraits of an Epicenter'
           ]
         },
         {
-          title: 'Community',
+          title: 'Scholarship & Leadership',
           items: [
-            '2026 Gems of Queens',
-            'Student Booklet: Discover District 26',
+            'Student Philosophy',
             'Migration, Homes and Borders',
-            'Student Philosophy'
+            'Women in NYC Politics',
+            'Student Booklet: District 26'
           ]
         }
       ]
@@ -296,7 +296,11 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                 onMouseEnter={() => menu.type === 'mega' ? setActiveMenu(menu.id) : setActiveMenu(null)}
               >
                 <button 
-                  onClick={() => (menu.type === 'link' || menu.id === 'collections') && setScreen(menu.id)}
+                  onClick={() => {
+                    if (menu.type === 'link') setScreen(menu.id);
+                    else if (menu.id === 'collections') setScreen('collections');
+                    else if (menu.id === 'exhibits') setScreen('education');
+                  }}
                   className={cn(
                     "flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-sans transition-all py-2",
                     activeMenu === menu.id || currentScreen === menu.id ? "text-secondary" : "text-on-surface/60 hover:text-on-surface"
@@ -335,7 +339,12 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                                 className="group/item flex gap-4 p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
                               >
                                 <div className="w-24 h-16 rounded-lg overflow-hidden flex-shrink-0 border border-white/10">
-                                  <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover/item:scale-110 transition-transform duration-500" referrerPolicy="no-referrer" />
+                                  <img 
+                                    src={item.image} 
+                                    alt={item.title} 
+                                    className="w-full h-full object-cover grayscale group-hover/item:grayscale-0 group-hover/item:scale-110 transition-all duration-500" 
+                                    referrerPolicy="no-referrer" 
+                                  />
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-serif mb-1 group-hover/item:text-secondary transition-colors">{item.title}</h4>
@@ -353,7 +362,11 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                                 <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-secondary mb-6">{col.title}</h4>
                                 <ul className="space-y-4">
                                   {col.items.map((item, i) => (
-                                    <li key={i} className="text-xs text-on-surface/60 hover:text-on-surface transition-colors cursor-pointer flex items-center gap-2 group/li">
+                                    <li 
+                                      key={i} 
+                                      onClick={() => { setScreen('education'); setActiveMenu(null); }}
+                                      className="text-xs text-on-surface/60 hover:text-on-surface transition-colors cursor-pointer flex items-center gap-2 group/li"
+                                    >
                                       <div className="w-1 h-1 rounded-full bg-secondary/30 group-hover/li:bg-secondary transition-colors" />
                                       {item}
                                     </li>
@@ -371,7 +384,7 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                                 key={idx} 
                                 onClick={() => {
                                   if (item.title === 'Historical Calendars') setScreen('calendars');
-                                  if (item.title === 'Archival Curricula') setScreen('curricula');
+                                  if (item.title === 'Archival Curricula') setScreen('education');
                                   if (item.title === 'Media & Reproductions') setScreen('media');
                                   setActiveMenu(null);
                                 }}
@@ -427,7 +440,11 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
               {menuData.map((menu) => (
                 <div key={menu.id} className="space-y-4">
                   <button 
-                    onClick={() => (menu.type === 'link' || menu.id === 'collections') ? (setScreen(menu.id), setIsMobileMenuOpen(false)) : null}
+                    onClick={() => {
+                      if (menu.type === 'link') { setScreen(menu.id); setIsMobileMenuOpen(false); }
+                      else if (menu.id === 'collections') { setScreen('collections'); setIsMobileMenuOpen(false); }
+                      else if (menu.id === 'exhibits') { setScreen('education'); setIsMobileMenuOpen(false); }
+                    }}
                     className="text-2xl font-serif italic text-on-surface flex items-center justify-between w-full"
                   >
                     {menu.label}
@@ -482,40 +499,41 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
   );
 };
 
-const Footer = () => {
+const Footer: React.FC<{ setScreen: (s: string) => void }> = ({ setScreen }) => {
   return (
     <footer className="bg-surface-container-low border-t border-white/10 mt-24">
       <div className="max-w-7xl mx-auto px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          {/* Media Reproductions */}
+          {/* Archival Services */}
           <div>
-            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Media Reproductions</h5>
+            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Archival Services</h5>
             <ul className="space-y-4">
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Request Photograph Reproductions</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Request Multi-Media Reproductions</a></li>
+              <li><button onClick={() => setScreen('media')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Media & Reproductions</button></li>
+              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Reproduction Request Forms</a></li>
+              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">User Satisfaction Survey</a></li>
+              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Library Resources</a></li>
             </ul>
           </div>
 
-          {/* Additional Resources */}
+          {/* Special Collections */}
           <div>
-            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Additional Resources</h5>
+            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Special Collections</h5>
             <ul className="space-y-4">
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">CUNY LGBTQIA+ Consortium</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Teacher Resources</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Mobile Applications</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">LaGuardia Community College Library</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Related Links</a></li>
-              <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Webdatabase User Satisfaction Survey</a></li>
+              <li><button onClick={() => setScreen('mayors')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">NYC Mayors & Leadership</button></li>
+              <li><button onClick={() => setScreen('lgbtq')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">LGBTQ+ History Consortium</button></li>
+              <li><button onClick={() => setScreen('calendars')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Historical Calendars</button></li>
+              <li><button onClick={() => setScreen('collections')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Queens Local History</button></li>
             </ul>
           </div>
 
-          {/* More Information */}
+          {/* Academic & Education */}
           <div>
-            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">More Information</h5>
-            <ul className="space-y-4 text-sm text-on-surface/70 font-light">
-              <li><a href="#" className="hover:text-secondary transition-colors">About the Archives</a></li>
-              <li><a href="#" className="hover:text-secondary transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-secondary transition-colors">Donation</a></li>
+            <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Academic & Education</h5>
+            <ul className="space-y-4">
+              <li><button onClick={() => setScreen('education')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Education Programs</button></li>
+              <li><button onClick={() => setScreen('about')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">About the Archives</button></li>
+              <li><button onClick={() => setScreen('contact')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Contact & Research Inquiry</button></li>
+              <li><button onClick={() => setScreen('donate')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Support & Donation</button></li>
             </ul>
           </div>
 
@@ -583,6 +601,23 @@ const Footer = () => {
 // --- Screens ---
 
 const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, login: () => any }> = ({ setScreen, user, login }) => {
+  const [collectionIdx, setCollectionIdx] = useState(0);
+  
+  const collections = [
+    { title: 'NYC Mayors & Leadership', icon: <Building2 />, desc: "The personal papers and official records of the City's transformative leadership, from La Guardia to Dinkins." },
+    { title: 'Government & Policy', icon: <FileText />, desc: "Exploring the machinery of municipal governance, City Council proceedings, and the evolution of public policy." },
+    { title: 'Culture & Society', icon: <Users />, desc: "Documenting the movements, arts, and diverse social identities that have defined NYC's vibrant civic fabric." },
+    { title: 'Local History & Business', icon: <Music />, desc: "A deep look into neighborhood archives and iconic businesses, including the Steinway & Sons collection." }
+  ];
+
+  const nextCollection = () => setCollectionIdx((prev) => (prev + 1) % collections.length);
+  const prevCollection = () => setCollectionIdx((prev) => (prev - 1 + collections.length) % collections.length);
+
+  const visibleCollections = [
+    collections[collectionIdx],
+    collections[(collectionIdx + 1) % collections.length],
+    collections[(collectionIdx + 2) % collections.length]
+  ];
   const [exhibits, setExhibits] = useState<any[]>([]);
   const [news, setNews] = useState<any[]>([]);
 
@@ -630,7 +665,7 @@ const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, 
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
-              onClick={() => setScreen('search')}
+              onClick={() => setScreen('collections')}
               className="bg-primary px-8 py-4 text-primary-container font-bold text-sm uppercase tracking-widest hover:brightness-110 transition-all flex items-center gap-2"
             >
               Explore Collections
@@ -758,25 +793,50 @@ const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, 
       {/* Core Collections */}
       <section className="bg-surface-container-low py-32 px-6 md:px-12">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-24">
-            <h2 className="text-4xl font-serif italic mb-4">Core Collections</h2>
-            <div className="h-1 w-24 bg-secondary mx-auto"></div>
+          <div className="flex flex-col md:flex-row justify-between items-center mb-24 gap-8">
+            <div className="text-center md:text-left">
+              <h2 className="text-4xl font-serif italic mb-4">Core Collections</h2>
+              <div className="h-1 w-24 bg-secondary mx-auto md:mx-0"></div>
+            </div>
+            <div className="flex gap-4">
+              <button 
+                onClick={prevCollection}
+                className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors text-on-surface/60"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button 
+                onClick={nextCollection}
+                className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-colors text-on-surface/60"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/5">
-            {[
-              { title: 'Government Records', icon: <Building2 />, desc: 'Official papers from the New York City Council and Mayoral administrations spanning a century of governance.' },
-              { title: 'Housing & Labor', icon: <Home />, desc: 'Records of the NYCHA and various labor unions documenting the lives of working-class New Yorkers.' },
-              { title: 'Industrial Heritage', icon: <Music />, desc: 'Exclusive access to the Steinway & Sons archives and the industrial development of Queens.' }
-            ].map((col, i) => (
-              <div key={i} className="bg-surface p-12 hover:bg-surface-container-high transition-all duration-500 group cursor-pointer" onClick={() => setScreen('collections')}>
-                <div className="text-4xl text-primary/40 mb-8 font-light">{col.icon}</div>
-                <h4 className="text-xl font-serif mb-4">{col.title}</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed font-light mb-8">{col.desc}</p>
-                <button className="text-[10px] uppercase tracking-widest font-bold text-secondary flex items-center gap-2">
-                  Explore <ArrowRight size={12} />
-                </button>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5 border border-white/5 overflow-hidden">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visibleCollections.map((col, i) => (
+                <motion.div 
+                  key={col.title}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  className="bg-surface p-12 hover:bg-surface-container-high transition-all duration-500 group cursor-pointer h-full" 
+                  onClick={() => {
+                    if (col.title === 'NYC Mayors & Leadership') setScreen('mayors');
+                    else setScreen('collections');
+                  }}
+                >
+                  <div className="text-4xl text-primary/40 mb-8 font-light">{col.icon}</div>
+                  <h4 className="text-xl font-serif mb-4">{col.title}</h4>
+                  <p className="text-sm text-on-surface-variant leading-relaxed font-light mb-8">{col.desc}</p>
+                  <button className="text-[10px] uppercase tracking-widest font-bold text-secondary flex items-center gap-2">
+                    Explore <ArrowRight size={12} />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         </div>
       </section>
@@ -785,77 +845,137 @@ const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, 
       <section className="py-32 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-1/2 h-full">
           <img 
-            className="w-full h-full object-cover opacity-10 grayscale" 
-            src="https://picsum.photos/seed/classroom/1000/1000?grayscale" 
-            alt="Classroom"
+            className="w-full h-full object-cover opacity-30 grayscale group-hover:scale-105 transition-transform duration-1000" 
+            src="https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/2_hsprf1.jpg" 
+            alt="Aural Archive"
             referrerPolicy="no-referrer"
           />
+          <div className="absolute inset-0 bg-gradient-to-l from-transparent to-surface"></div>
         </div>
         <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
           <div className="md:w-3/5 bg-surface-container-highest/40 backdrop-blur-xl p-16 border-l-4 border-secondary">
             <span className="text-secondary text-xs uppercase tracking-widest font-bold mb-4 block">For Educators</span>
             <h2 className="text-4xl font-serif italic mb-8">Bringing History to the Classroom</h2>
-            <p className="text-lg text-on-surface-variant font-light mb-12 leading-relaxed">
-              We provide curated DBQs (Document-Based Questions), historical maps, and curriculum guides that align with New York State standards to help students engage directly with primary source documents.
+            <p className="text-lg text-on-surface-variant font-light mb-12 leading-relaxed italic">
+              "Excellence in pedagogy through archival discovery. We provide specialized resources for educators, from LGBTQ+ history modules to thematic municipal calendars."
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
               <div className="flex items-start gap-4">
-                <FileText className="text-primary" size={24} />
+                <Users className="text-secondary" size={24} />
                 <div>
-                  <h5 className="font-bold text-sm mb-1 uppercase tracking-wider">Lesson Plans</h5>
-                  <p className="text-xs text-on-surface-variant">Ready-to-use digital modules for K-12 and College levels.</p>
+                  <h5 className="font-bold text-sm mb-1 uppercase tracking-wider">LGBTQ+ & Civic History</h5>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">Documenting the struggle for rights and the historic impact of women in municipal government.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <MapIcon className="text-primary" size={24} />
+                <BookOpen className="text-secondary" size={24} />
                 <div>
-                  <h5 className="font-bold text-sm mb-1 uppercase tracking-wider">Historical Maps</h5>
-                  <p className="text-xs text-on-surface-variant">Interactive GIS overlays showing urban changes over time.</p>
+                  <h5 className="font-bold text-sm mb-1 uppercase tracking-wider">Calendars & Scholarship</h5>
+                  <p className="text-xs text-on-surface-variant leading-relaxed">Thematic explorations of NYC boroughs and research-driven student booklets.</p>
                 </div>
               </div>
             </div>
-            <button className="mt-12 border-b border-primary text-primary px-0 py-2 text-xs uppercase tracking-[0.2em] font-bold hover:text-primary/80 transition-colors">
+            <button 
+              onClick={() => setScreen('education')}
+              className="mt-12 border-b border-primary text-primary px-0 py-2 text-xs uppercase tracking-[0.2em] font-bold hover:text-primary/80 transition-colors"
+            >
               Access Educator Portal
             </button>
           </div>
         </div>
       </section>
 
-      {/* News & Newsletter */}
+      {/* Stay Connected Hub */}
       <section className="bg-background py-32 px-6 md:px-12 border-t border-white/5">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-24">
-          <div className="lg:col-span-2">
-            <h2 className="text-3xl font-serif italic mb-12">Archive Dispatches</h2>
-            <div className="space-y-12">
-              {news.length > 0 ? news.map((item, i) => (
-                <article key={i} className="flex flex-col md:flex-row gap-8 items-start group cursor-pointer">
-                  <span className="text-xs font-mono text-secondary pt-1 shrink-0">
-                    {new Date(item.date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-                  </span>
-                  <div>
-                    <h4 className="text-xl font-serif mb-2 group-hover:underline underline-offset-4 decoration-primary/30 decoration-1">{item.title}</h4>
-                    <p className="text-sm text-on-surface-variant font-light">{item.description}</p>
-                  </div>
-                </article>
-              )) : (
-                <p className="text-on-surface/40 italic">No news dispatches available.</p>
-              )}
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-8">
+            <div className="max-w-xl">
+              <span className="text-secondary text-[10px] uppercase tracking-[0.4em] font-bold mb-4 block">The Digital Network</span>
+              <h2 className="text-5xl font-serif italic text-on-surface mb-6">Stay Connected</h2>
+              <p className="text-sm text-on-surface/50 font-light leading-relaxed">
+                Join our community of historians, educators, and researchers. Subscription ensures you receive the latest archival discoveries and program updates directly.
+              </p>
             </div>
           </div>
-          <div className="bg-surface-container-high p-12">
-            <h3 className="text-xl font-serif mb-6">Stay Connected</h3>
-            <p className="text-sm text-on-surface-variant mb-8 font-light">Receive monthly updates on new collections, public events, and historical insights from our curators.</p>
-            <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                className="w-full bg-surface-container-low border-b border-outline-variant focus:border-secondary transition-colors py-3 px-4 text-sm outline-none" 
-                placeholder="Your Email Address" 
-                type="email" 
-              />
-              <button className="w-full bg-secondary text-on-secondary-container py-3 text-xs uppercase tracking-widest font-bold hover:brightness-110 transition-all">
-                Subscribe
-              </button>
-            </form>
-            <p className="text-[10px] text-on-surface-variant/40 mt-6 leading-relaxed">By subscribing, you agree to receive institutional communications from CUNY and the Archives.</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Newsletter Card */}
+            <div className="lg:col-span-7 bg-surface-container-high p-12 rounded-3xl border border-white/5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-secondary/10 transition-colors" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+                    <Mail size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-serif italic">Archive Dispatches</h3>
+                    <p className="text-[10px] text-on-surface/40 uppercase tracking-widest">Monthly Newsletter</p>
+                  </div>
+                </div>
+                
+                <form className="flex flex-col sm:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email address..."
+                    className="flex-grow bg-background border border-white/10 px-6 py-4 outline-none focus:border-secondary transition-colors text-sm"
+                  />
+                  <button className="bg-secondary text-on-secondary-container px-10 py-4 text-[10px] uppercase tracking-widest font-bold hover:brightness-110 transition-all">
+                    Subscribe
+                  </button>
+                </form>
+                <p className="mt-6 text-[10px] text-on-surface/30 italic">
+                  * By subscribing, you agree to receive digital communications from LaGuardia and Wagner Archives.
+                </p>
+              </div>
+            </div>
+
+            {/* Social & Contact Grid */}
+            <div className="lg:col-span-5 grid grid-cols-2 gap-4">
+              {[
+                { name: 'Facebook', icon: <Facebook size={20} />, label: 'LaGuardia Archives', color: 'hover:text-[#1877F2]' },
+                { name: 'Instagram', icon: <Instagram size={20} />, label: '@LaguardiaArchives', color: 'hover:text-[#E4405F]' },
+                { name: 'X / Twitter', icon: <Twitter size={20} />, label: '@LWA_Archives', color: 'hover:text-on-surface' },
+                { name: 'YouTube', icon: <Youtube size={20} />, label: 'L&W Archives TV', color: 'hover:text-[#FF0000]' }
+              ].map((social) => (
+                <a 
+                  key={social.name}
+                  href="#"
+                  className={cn(
+                    "bg-surface-container-low border border-white/5 p-6 rounded-2xl flex flex-col items-center justify-center text-center transition-all group/social",
+                    social.color
+                  )}
+                >
+                  <div className="text-on-surface/20 group-hover/social:text-inherit transition-colors mb-4">
+                    {social.icon}
+                  </div>
+                  <span className="text-[9px] uppercase tracking-[0.2em] font-bold block mb-1 opacity-40 group-hover/social:opacity-100 transition-opacity">
+                    {social.name}
+                  </span>
+                  <span className="text-[10px] font-mono opacity-20 group-hover/social:opacity-60 transition-opacity">
+                    {social.label}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-16 flex flex-wrap justify-between items-center gap-8 border-t border-white/5 pt-12">
+            <div className="flex gap-12">
+              <div className="space-y-1">
+                <p className="text-[10px] text-on-surface/30 uppercase tracking-widest">Inquiries</p>
+                <a href="mailto:archives@lagcc.cuny.edu" className="text-xs hover:text-secondary transition-colors">archives@lagcc.cuny.edu</a>
+              </div>
+              <div className="space-y-1">
+                <p className="text-[10px] text-on-surface/30 uppercase tracking-widest">Location</p>
+                <p className="text-xs">Long Island City, NY 11101</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => setScreen('contact')}
+              className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] flex items-center gap-2 group/btn"
+            >
+              [ Full Research Inquiry ] <ArrowRight size={14} className="group-hover/btn:translate-x-2 transition-transform" />
+            </button>
           </div>
         </div>
       </section>
@@ -863,126 +983,320 @@ const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, 
   );
 };
 
-const CurriculaScreen = () => {
-  const [activeTab, setActiveTab] = useState<'K12' | 'LAGCC' | 'DBQ'>('K12');
+const EducationProgramsScreen = () => {
+  const [filter, setFilter] = useState<string | null>(null);
+  const programs = [
+    {
+      category: "Calendars & Series",
+      title: "2026 Gems of Queens: A Glimpse of New York City's most diverse borough.",
+      desc: "The 2026 LaGuardia and Wagner Archives calendar puts a spotlight on Queens. Drawing on archival images from the Queens Local Collection, the calendar explores the borough's history and diversity.",
+      id: 1,
+      ref: "EDU-CAL-26",
+      tags: ["Queens", "Community", "Diversity"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/1_ixymjo.jpg"
+    },
+    {
+      category: "Calendars & Series",
+      title: "Gotham Transformed: How 19th-Century Innovation Shaped New York City",
+      desc: "This 2025 calendar celebrates the ingenuity and boldness of visionaries, engineers, and entrepreneurs of the 1800s that have made New York City into a global city.",
+      id: 2,
+      ref: "EDU-CAL-25",
+      tags: ["Innovation", "19th Century", "Engineering"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/2_hsprf1.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "An LGBTQ+ New York Worth Fighting For",
+      desc: "In Fall 2024 a group of LaGuardia students and faculty began working on building an archive of under-represented/underfunded LGBTQ+ spaces in New York City.",
+      id: 3,
+      ref: "EDU-LGBT-01",
+      tags: ["Spaces", "Activism", "Under-represented"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/3_e18erh.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "The Battle for Intro. 2: The New York City Gay Rights Bill, 1971 - 1986",
+      desc: "This exhibit chronicles the struggle in New York City to pass the Gay Rights Bill, a local law known as Intro. 2 in the City Council.",
+      id: 4,
+      ref: "EDU-CIV-02",
+      tags: ["Policy", "Civil Rights", "City Council"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/4_nvb0ak.jpg"
+    },
+    {
+      category: "Scholarship & Leadership",
+      title: "Women in NYC Politics (formerly Making it here)",
+      desc: "Gardiner-Shenker Scholars researched women in local government, interviewing elected officials to document challenges and community solutions.",
+      id: 5,
+      ref: "EDU-STU-05",
+      tags: ["Women", "Politics", "Oral History"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403504/5_bwjpjw.jpg"
+    },
+    {
+      category: "Scholarship & Leadership",
+      title: "Student Booklet: District 26",
+      desc: "Scholars photographed local resources and organizations available to LaGuardia students and community members in District 26.",
+      id: 6,
+      ref: "EDU-STU-06",
+      tags: ["Queens", "Neighborhoods", "Resources"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403505/6_yfypw5.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "A Seat At The Table",
+      desc: "An exhibit on LGBTQ elected officials in the New York City Council and State Legislature from the 1990s to the present.",
+      id: 7,
+      ref: "EDU-LGBT-03",
+      tags: ["Elected Officials", "Representation"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403505/7_vjtpsz.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "Children Of The Rainbow Exhibit",
+      desc: "Revisit the 1992 controversy when supporters advocated multicultural education and opponents criticized same-sex couple families.",
+      id: 8,
+      ref: "EDU-LGBT-04",
+      tags: ["Curriculum", "Multiculturalism", "1990s"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403505/8_dfkzky.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "Next Stop Queer New York",
+      desc: "Recognizes LGBTQ+ presence in politics, business, and arts. Includes modules on protests, nightlife, and fine art (2019-2022).",
+      id: 9,
+      ref: "EDU-LGBT-05",
+      tags: ["Nightlife", "Business", "Arts"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403505/9_o6votj.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "Next Stop Queer New York: Suplemento (Spanish Edition)",
+      desc: "Este suplemento reconoce la presencia LGBTQ+ en la política, los negocios y las artes. Incluye módulos sobre protestas y teatro.",
+      id: 10,
+      ref: "EDU-LGBT-05S",
+      tags: ["Spanish", "Multilingual"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403505/10_ej5x8x.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "Shades of the Rainbow",
+      desc: "Gen Z reframes identity through photography and oral history, telling stories of coming out across diverse ethnicities and religions.",
+      id: 11,
+      ref: "EDU-LGBT-06",
+      tags: ["Gen Z", "Fluidity", "Intersectionality"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403506/11_wduha0.jpg"
+    },
+    {
+      category: "Scholarship & Leadership",
+      title: "Women In Government",
+      desc: "In honor of the 2022 female majority in City Council, featuring a timeline, facts, and student reflections on leadership.",
+      id: 12,
+      ref: "EDU-CIV-03",
+      tags: ["Leadership", "Milestones", "City Council"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403506/12_lhexyg.jpg"
+    },
+    {
+      category: "Calendars & Series",
+      title: "9/11 Collections (Reflections from LaGuardia)",
+      desc: "Twenty-one years later, how do we connect to the shock and grief of 2001? Personal reflections from a generation born after.",
+      id: 13,
+      ref: "EDU-CAL-0911",
+      tags: ["Tragedy", "Memory", "Reflections"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403506/13_d89n7s.jpg"
+    },
+    {
+      category: "Scholarship & Leadership",
+      title: "Migration, Homes and Borders",
+      desc: "Photography students exploring cultural identity, nationality, and the impacts of gentrification in immigrant communities.",
+      id: 14,
+      ref: "EDU-STU-14",
+      tags: ["Migration", "Gentrification", "Identity"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403507/14_rjp4jc.jpg"
+    },
+    {
+      category: "LGBTQ+ History",
+      title: "Rainbow LaGuardia",
+      desc: "Digital exhibition chronicling the narratives and pedagogical approaches of LGBT faculty and staff.",
+      id: 15,
+      ref: "EDU-LGBT-07",
+      tags: ["Faculty", "Narratives", "Higher Ed"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403503/15_byaaqc.jpg"
+    },
+    {
+      category: "Calendars & Series",
+      title: "Portraits of an Epicenter",
+      desc: "Students documented their experiences during the 2020 Spring pandemic lockdown through photography and essays.",
+      id: 16,
+      ref: "EDU-CAL-COV",
+      tags: ["Pandemic", "Lockdown", "Diary"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403503/16_k9hfyg.jpg"
+    },
+    {
+      category: "Scholarship & Leadership",
+      title: "Student Philosophy",
+      desc: "Critical evaluation of contemporary news and archival research where students develop solutions to urgent NYC problems.",
+      id: 17,
+      ref: "EDU-STU-17",
+      tags: ["Philosophy", "Solutions", "Critical Thinking"],
+      image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1777403503/17_ljk8vp.jpg"
+    }
+  ];
 
-  const curricula = {
-    K12: [
-      { id: 1, title: "The 1939 World's Fair", grade: "4th & 7th", pages: 28, desc: "A deep dive into New York's 'World of Tomorrow' through official documents and souvenirs." },
-      { id: 2, title: "Fiorello LaGuardia & The New Deal", grade: "8th & 11th", pages: 42, desc: "Primary source letters and photographs detailing the transformation of New York during the Great Depression." },
-      { id: 3, title: "Housing in NYC: The Great Migration", grade: "7th & 11th", pages: 35, desc: "Analyzing NYCHA archives to understand demographic shifts and urban planning history." },
-      { id: 4, title: "Public Health: The 1918 Flu in NYC", grade: "11th +", pages: 22, desc: "Documentary records of the Health Department's response to historical pandemics." }
-    ],
-    LAGCC: [
-      { id: 5, title: "Sociology of the City", author: "Dr. Maria Silva", pages: 18, desc: "Using mayoral archives to study class stratification in 20th century Manhattan." },
-      { id: 6, title: "Queens Labor History", author: "Prof. James Chen", pages: 24, desc: "A seminar-style module exploring the industrial heritage of Long Island City." }
-    ],
-    DBQ: [
-      { id: 7, title: "Woman Suffrage in NY", type: "DBQ Pack", pages: 15, desc: "Curated set of 12 primary sources and analytical questions regarding the suffrage movement." },
-      { id: 8, title: "Modern Civil Rights in Queens", type: "DBQ Pack", pages: 19, desc: "Focusing on local activism and non-violent protest records from the 1960s." }
-    ]
-  };
+  const categories = ["LGBTQ+ History", "Calendars & Series", "Scholarship & Leadership"];
+
+  const filteredPrograms = filter 
+    ? programs.filter(p => p.category === filter)
+    : programs;
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="pt-32 pb-24 px-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-32 pb-24 px-8 max-w-7xl mx-auto font-mono"
     >
-      {/* Intro Section */}
-      <section className="max-w-3xl mx-auto text-center mb-20">
-        <span className="text-secondary text-xs uppercase tracking-[0.4em] font-bold block mb-4">Educational Resources</span>
-        <h1 className="text-5xl font-serif italic mb-8">Archival Curricula</h1>
-        <p className="text-lg text-on-surface/60 font-light leading-relaxed italic">
-          "Below is a list of documents and resources from the LaGuardia and Wagner Archives collections. They are designed as Document Based Questions to be used in the classroom."
-        </p>
-        <p className="mt-4 text-sm text-on-surface/40 leading-relaxed max-w-2xl mx-auto">
-          Even though they are listed as grade specific, the resources are useful for any grade or college level course with some input from the instructor.
-        </p>
-      </section>
-
-      {/* The Archival Ledger (Tabs) */}
-      <div className="max-w-6xl mx-auto">
-        <div className="flex border-b border-white/10 mb-12 overflow-x-auto scrollbar-none">
-          {[
-            { id: 'K12', label: '4th/7th/8th/11th Grade Curricula' },
-            { id: 'LAGCC', label: 'LAGCC Professor Lesson Plans' },
-            { id: 'DBQ', label: 'More DBQ Lesson Plans' }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={cn(
-                "px-8 py-5 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-all relative",
-                activeTab === tab.id ? "text-secondary" : "text-on-surface/30 hover:text-on-surface/60"
-              )}
-            >
-              {tab.label}
-              {activeTab === tab.id && (
-                <motion.div 
-                  layoutId="tab-underline"
-                  className="absolute bottom-0 left-0 right-0 h-1 bg-secondary shadow-[0_-4px_10px_rgba(var(--secondary),0.3)]" 
-                />
-              )}
-            </button>
-          ))}
+      <header className="mb-20 border-b border-white/10 pb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+          <div className="max-w-2xl">
+            <span className="text-secondary text-[10px] uppercase tracking-[0.5em] font-bold mb-4 block">Archive: Education Series</span>
+            <h1 className="text-4xl md:text-5xl font-serif italic mb-6 text-on-surface">Education Programs</h1>
+            <p className="text-xs text-on-surface/50 leading-relaxed uppercase tracking-wider">
+              Specialized pedagogical resources for educators, bridging archival discovery with modern classroom engagement.
+            </p>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] text-on-surface/30 mb-2 uppercase tracking-widest">Metadata Standard</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-on-surface/60 font-bold uppercase tracking-widest">ISO 15489-1 COMPLIANT</span>
+            </div>
+          </div>
         </div>
+      </header>
 
-        {/* Content Area */}
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-          >
-            {curricula[activeTab].map((item) => (
-              <div key={item.id} className="group bg-surface-container-low border border-white/5 hover:bg-surface-container-high hover:border-secondary/20 transition-all p-8 flex gap-8 rounded-2xl">
-                <div className="w-32 h-44 bg-surface-container-highest flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-700 shadow-xl overflow-hidden relative border border-white/10">
-                  <img 
-                    src={`https://picsum.photos/seed/cur-${item.id}/300/400?grayscale`} 
-                    alt="Source Preview" 
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
-                  />
-                  <div className="absolute inset-0 ring-1 ring-inset ring-white/10"></div>
-                </div>
-                <div className="flex flex-col justify-between py-1">
-                  <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="bg-secondary/10 text-secondary text-[9px] font-bold px-2 py-0.5 rounded tracking-widest uppercase">
-                        {'grade' in item ? item.grade : ('author' in item ? 'College' : 'History')}
-                      </span>
-                      <span className="text-[9px] text-on-surface/30 font-mono tracking-widest">
-                        {item.pages} PAGES
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-serif italic mb-3 group-hover:text-secondary transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs text-on-surface/50 font-light leading-relaxed line-clamp-3">
-                      {item.desc}
-                    </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-16">
+        {/* Technical Filter Sidebar */}
+        <aside className="lg:col-span-1 space-y-12">
+          <div>
+            <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-secondary mb-6 flex items-center gap-2">
+              <Filter size={14} /> Program Theme
+            </h3>
+            <div className="flex flex-col gap-2">
+              <button 
+                onClick={() => setFilter(null)}
+                className={cn(
+                  "text-left px-4 py-2 text-[10px] uppercase tracking-widest transition-all border",
+                  filter === null 
+                    ? "bg-secondary text-on-secondary-container border-secondary font-bold" 
+                    : "border-white/5 text-on-surface/40 hover:border-white/20"
+                )}
+              >
+                [ All Resources ]
+              </button>
+              {categories.map(cat => (
+                <button 
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className={cn(
+                    "text-left px-4 py-2 text-[10px] uppercase tracking-widest transition-all border",
+                    filter === cat 
+                      ? "bg-secondary text-on-secondary-container border-secondary font-bold" 
+                      : "border-white/5 text-on-surface/40 hover:border-white/20"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-surface-container-low p-6 border border-white/5 rounded-lg space-y-4">
+            <h4 className="text-[9px] uppercase tracking-[0.2em] font-bold text-on-surface/30">Quick Access</h4>
+            <div className="space-y-4">
+              <p className="text-[10px] text-on-surface/40 leading-relaxed font-light italic">
+                Are you an NYC educator? Request bulk printed sets for your classroom.
+              </p>
+              <button className="w-full bg-white/5 border border-white/10 py-2 text-[8px] uppercase tracking-widest font-bold hover:bg-secondary hover:text-on-secondary-container transition-all">
+                Teacher Inquiry Portal
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* The Program Ledger */}
+        <div className="lg:col-span-3">
+          <div className="space-y-8">
+            <AnimatePresence mode="popLayout">
+              {filteredPrograms.map((program) => (
+                <motion.div 
+                  key={program.id}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="group bg-surface-container-low border border-white/5 hover:border-secondary/20 transition-all p-8 rounded-xl flex flex-col md:flex-row gap-8 relative overflow-hidden"
+                >
+                  {/* Ledger Index mark */}
+                  <div className="absolute top-0 right-0 p-4 font-mono text-[80px] leading-none opacity-[0.03] pointer-events-none group-hover:opacity-[0.05] transition-opacity">
+                    {program.id}
                   </div>
-                  <button className="flex items-center gap-2 text-[10px] font-bold text-secondary uppercase tracking-widest mt-6 group/btn">
-                    Download DBQ <ArrowRight size={14} className="group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
-      </div>
 
-      <div className="max-w-2xl mx-auto mt-24 p-12 bg-surface-container-low text-center rounded-3xl border border-white/5">
-        <h4 className="text-xl font-serif italic mb-4">Request Printed Copies</h4>
-        <p className="text-sm text-on-surface/50 leading-relaxed font-light mb-8 italic">
-          Are you a local NYC educator? We provide bulk printed curriculum sets for select modules while supplies last.
-        </p>
-        <button className="bg-secondary text-on-secondary-container px-8 py-3 text-[10px] uppercase tracking-widest font-bold hover:brightness-110 transition-all">
-          Teacher Inquiry Portal
-        </button>
+                  <div className="md:w-32 flex-shrink-0">
+                    <span className="text-[10px] font-bold text-secondary mb-2 block tracking-tighter">
+                      {program.ref}
+                    </span>
+                    <div className="w-full aspect-[3/4] bg-surface-container-highest flex items-center justify-center border border-white/5 grayscale group-hover:grayscale-0 transition-all overflow-hidden relative">
+                      {program.image ? (
+                        <img 
+                          src={program.image} 
+                          alt={program.title} 
+                          className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="text-[8px] text-center text-on-surface/30 uppercase tracking-widest leading-relaxed p-4">
+                          Educational<br/>Program<br/>Module
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-grow flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-4 mb-4">
+                        <span className="text-[9px] uppercase tracking-widest font-bold text-on-surface/40 hover:text-secondary transition-colors">
+                          {program.category}
+                        </span>
+                        <div className="h-px w-8 bg-white/10" />
+                        <div className="flex gap-2">
+                          {program.tags.map(tag => (
+                            <span key={tag} className="text-[7px] uppercase tracking-tighter text-on-surface/20 border border-white/5 px-1">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <h3 className="text-xl font-serif italic text-on-surface mb-4 group-hover:text-secondary transition-colors leading-tight max-w-xl">
+                        {program.title}
+                      </h3>
+                      <p className="text-[11px] text-on-surface/50 leading-relaxed font-light italic max-w-2xl">
+                        "{program.desc}"
+                      </p>
+                    </div>
+
+                    <button className="mt-8 flex items-center gap-3 text-[10px] font-bold text-secondary uppercase tracking-[0.2em] group/btn">
+                      [ View this education program ] 
+                      <ArrowRight size={12} className="group-hover/btn:translate-x-2 transition-transform" />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          <div className="mt-16 flex justify-between items-center text-[9px] uppercase tracking-[0.4em] text-on-surface/20 border-t border-white/5 pt-8">
+            <span>Catalogue: Education 2026 Edition</span>
+            <span>END OF LIST</span>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -2993,11 +3307,11 @@ export default function App() {
           {screen === 'media' && <MediaScreen key="media" />}
           {screen === 'donate' && <DonateScreen key="donate" />}
           {screen === 'calendars' && <CalendarsScreen key="calendars" />}
-          {screen === 'curricula' && <CurriculaScreen key="curricula" />}
+          {screen === 'education' && <EducationProgramsScreen key="education" />}
         </AnimatePresence>
       </main>
 
-      <Footer />
+      <Footer setScreen={setScreen} />
     </div>
   );
 }
