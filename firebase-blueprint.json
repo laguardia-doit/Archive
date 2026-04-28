@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "Collection": {
+      "title": "Collection",
+      "description": "A major archival collection",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string", "enum": ["Social History", "Political History", "Community History"] },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "isCore": { "type": "boolean" },
+        "status": { "type": "string" }
+      },
+      "required": ["title", "description", "category"]
+    },
+    "Exhibit": {
+      "title": "Exhibit",
+      "description": "A featured historical exhibition",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["title", "description", "imageUrl"]
+    },
+    "NewsItem": {
+      "title": "NewsItem",
+      "description": "A news dispatch from the archives",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" }
+      },
+      "required": ["title", "description", "date"]
+    },
+    "ArchiveItem": {
+      "title": "ArchiveItem",
+      "description": "An individual item in the archive",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "collectionId": { "type": "string" },
+        "borough": { "type": "string" },
+        "imageUrl": { "type": "string", "format": "uri" },
+        "topics": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "description", "imageUrl"]
+    }
+  },
+  "firestore": {
+    "/collections/{collectionId}": {
+      "schema": "Collection",
+      "description": "Major collections"
+    },
+    "/exhibits/{exhibitId}": {
+      "schema": "Exhibit",
+      "description": "Exhibitions"
+    },
+    "/news/{newsId}": {
+      "schema": "NewsItem",
+      "description": "News dispatches"
+    },
+    "/items/{itemId}": {
+      "schema": "ArchiveItem",
+      "description": "Individual archive items"
+    }
+  }
+}
