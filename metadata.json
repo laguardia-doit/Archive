@@ -1,5 +1,6 @@
 {
   "name": "The LaGuardia & Wagner Archives",
   "description": "A digital repository preserving the social and political history of New York City, featuring mayoral collections, historical photographs, and educational resources.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

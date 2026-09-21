@@ -20,6 +20,8 @@ import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User 
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, auth, storage } from './firebase';
 import { 
+  LayoutGrid,
+  List as LayoutList,
   Search, 
   Menu, 
   X, 
@@ -44,6 +46,7 @@ import {
   MapPin,
   Clock,
   ExternalLink,
+  HelpCircle,
   Facebook,
   Twitter,
   Instagram,
@@ -58,6 +61,7 @@ import {
   Mic,
   User as UserIcon
 } from 'lucide-react';
+import { NychaScreen } from './components/NychaScreen';
 
 // --- Firebase Helpers ---
 
@@ -146,16 +150,28 @@ const FirebaseImageUploader = ({ onUploadSuccess }: { onUploadSuccess: (url: str
 
 // --- Components ---
 
-const Navbar = ({ currentScreen, setScreen, user, login, logout }: { 
+const Navbar = ({ currentScreen, setScreen, user, login, logout, setGlobalSearchTerm }: { 
   currentScreen: string, 
   setScreen: (s: string) => void,
   user: User | null,
   login: () => void,
-  logout: () => void
+  logout: () => void,
+  setGlobalSearchTerm: (s: string) => void
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+
+  const searchSuggestions = [
+    "Fiorello La Guardia",
+    "Robert F. Wagner",
+    "NYCHA Queens Plannings",
+    "LGBTQ+ History Consortium",
+    "World's Fair 1939",
+    "Steinway Mansion Maps"
+  ].filter(s => s.toLowerCase().includes(searchQuery.toLowerCase()) && searchQuery.length > 0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
@@ -172,8 +188,9 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
       items: [
         { title: 'NYC Mayors & Leadership', description: "The personal papers and official records of the City's transformative leadership, from La Guardia to Dinkins.", icon: <Building2 size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775486/The_Rise_of_a_Reformer_-_La_Guardia_Radio_Programs_ie8gx4.webp' },
         { title: 'Government & Policy', description: 'Exploring the machinery of municipal governance, City Council proceedings, and the evolution of public policy.', icon: <Users size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/The-Council-of-the-City-of-New-York_v5gtmw.webp' },
+        { title: 'NYC Housing Authority (NYCHA)', description: 'Over 450,000 documents, blueprints, and photographs tracing public housing and urban renewal from 1934.', icon: <Home size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776708049/the_past_present_and_future_jgmejr.png' },
         { title: 'Culture & Society', description: "Documenting the movements, arts, and diverse social identities that have defined NYC's vibrant civic fabric.", icon: <History size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/The-LGBTQ-Collection_xtv3gu.webp' },
-        { title: 'Local History & Business', description: 'A deep look into neighborhood archives and iconic businesses, including the Steinway & Sons collection.', icon: <Home size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/Steinway-_-Sons_w1escv.webp' },
+        { title: 'Local History & Business', description: 'A deep look into neighborhood archives and iconic businesses, including the Steinway & Sons collection.', icon: <Music size={16} />, image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/Steinway-_-Sons_w1escv.webp' },
       ]
     },
     {
@@ -223,6 +240,7 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
         { title: 'Archival Curricula', description: 'Access document-based lessons (DBQs) and historical modules designed for the classroom.', icon: <FileText size={16} /> },
         { title: 'Historical Calendars', description: 'Browse our award-winning annual calendars documenting the long history of struggle and progress.', icon: <Calendar size={16} /> },
         { title: 'Media & Reproductions', description: 'Request high-quality archival reproductions or licensing for media and research.', icon: <Music size={16} /> },
+        { title: 'FAQ & Help', description: 'Find quick answers about access, appointments, and research policies.', icon: <HelpCircle size={16} />, id: 'faq' },
       ]
     },
   ];
@@ -238,10 +256,12 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
           <Facebook size={12} className="text-on-surface/30 hover:text-secondary cursor-pointer transition-colors" />
           <Twitter size={12} className="text-on-surface/30 hover:text-secondary cursor-pointer transition-colors" />
           <Instagram size={12} className="text-on-surface/30 hover:text-secondary cursor-pointer transition-colors" />
+          <Youtube size={12} className="text-on-surface/30 hover:text-secondary cursor-pointer transition-colors" />
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-6 border-r border-white/10 pr-6">
             <button onClick={() => setScreen('about')} className="text-[9px] uppercase tracking-[0.2em] text-on-surface/50 hover:text-secondary transition-colors">About</button>
+            <button onClick={() => setScreen('faq')} className="text-[9px] uppercase tracking-[0.2em] text-on-surface/50 hover:text-secondary transition-colors">FAQ</button>
             <button onClick={() => setScreen('contact')} className="text-[9px] uppercase tracking-[0.2em] text-on-surface/50 hover:text-secondary transition-colors">Contact</button>
           </div>
           <button 
@@ -333,6 +353,8 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                                 key={idx} 
                                 onClick={() => { 
                                   if (item.title === 'NYC Mayors & Leadership') setScreen('mayors');
+                                  else if (item.title === 'Government & Policy') setScreen('government');
+                                  else if (item.title.includes('Housing Authority') || item.title.includes('NYCHA')) setScreen('nycha');
                                   else setScreen('collections'); 
                                   setActiveMenu(null); 
                                 }}
@@ -386,6 +408,7 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                                   if (item.title === 'Historical Calendars') setScreen('calendars');
                                   if (item.title === 'Archival Curricula') setScreen('education');
                                   if (item.title === 'Media & Reproductions') setScreen('media');
+                                  if (item.id === 'faq') setScreen('faq');
                                   setActiveMenu(null);
                                 }}
                                 className="p-4 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group/item border border-transparent hover:border-white/5 flex items-center gap-4"
@@ -409,10 +432,56 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
             ))}
           </div>
 
-          {/* Search Icon */}
+          {/* Inline Search */}
+          <div className="hidden lg:flex items-center relative h-10 px-4 bg-white/5 border border-white/10 rounded-full transition-all focus-within:ring-1 focus-within:ring-secondary/50 max-w-[200px] xl:max-w-[300px]">
+             <Search size={14} className="text-on-surface/40" />
+             <input 
+               type="text"
+               placeholder="Broad search..."
+               className="bg-transparent border-none outline-none text-[10px] uppercase tracking-widest px-3 w-full placeholder:text-on-surface/20"
+               value={searchQuery}
+               onChange={(e) => setSearchQuery(e.target.value)}
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter') {
+                   setGlobalSearchTerm(searchQuery);
+                   setScreen('search');
+                   setSearchQuery("");
+                 }
+               }}
+             />
+             <AnimatePresence>
+               {searchSuggestions.length > 0 && (
+                 <motion.div 
+                   initial={{ opacity: 0, y: 5 }}
+                   animate={{ opacity: 1, y: 0 }}
+                   exit={{ opacity: 0, y: 5 }}
+                   className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high rounded-xl border border-white/10 shadow-2xl overflow-hidden py-2"
+                 >
+                   {searchSuggestions.map((suggestion, i) => (
+                     <button 
+                       key={i}
+                       onClick={() => {
+                         setGlobalSearchTerm(suggestion);
+                         setScreen('search');
+                         setSearchQuery("");
+                       }}
+                       className="w-full text-left px-4 py-2 text-[10px] uppercase tracking-widest text-on-surface/60 hover:text-secondary hover:bg-white/5 transition-colors"
+                     >
+                       {suggestion}
+                     </button>
+                   ))}
+                   <div className="px-4 py-2 mt-2 border-t border-white/5">
+                     <p className="text-[8px] text-on-surface/30 font-bold uppercase tracking-[0.2em]">Press Enter to search all records</p>
+                   </div>
+                 </motion.div>
+               )}
+             </AnimatePresence>
+          </div>
+
+          {/* Search Icon (fallback for smaller screens or simple navigation) */}
           <button 
             onClick={() => setScreen('search')}
-            className="p-2 text-on-surface/60 hover:text-secondary transition-colors"
+            className="lg:hidden p-2 text-on-surface/60 hover:text-secondary transition-colors"
           >
             <Search size={18} />
           </button>
@@ -453,10 +522,20 @@ const Navbar = ({ currentScreen, setScreen, user, login, logout }: {
                   {menu.type === 'mega' && (
                     <div className="grid grid-cols-1 gap-4 pl-4 border-l border-white/10">
                       {menu.items?.map((item, idx) => (
-                        <div key={idx} className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-on-surface/80">{item.title}</span>
+                        <button 
+                          key={idx} 
+                          onClick={() => {
+                            if (item.title === 'NYC Mayors & Leadership') setScreen('mayors');
+                            else if (item.title === 'Government & Policy') setScreen('government');
+                            else if (item.title.includes('Housing Authority') || item.title.includes('NYCHA')) setScreen('nycha');
+                            else setScreen('collections');
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="flex flex-col gap-1 items-start text-left"
+                        >
+                          <span className="text-sm font-medium text-on-surface/80 hover:text-secondary transition-colors">{item.title}</span>
                           <span className="text-[10px] text-on-surface/40">{item.description}</span>
-                        </div>
+                        </button>
                       ))}
                       {menu.columns?.map((col, idx) => (
                         <div key={idx} className="space-y-2">
@@ -509,6 +588,7 @@ const Footer: React.FC<{ setScreen: (s: string) => void }> = ({ setScreen }) => 
             <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Archival Services</h5>
             <ul className="space-y-4">
               <li><button onClick={() => setScreen('media')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Media & Reproductions</button></li>
+              <li><button onClick={() => setScreen('faq')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Frequently Asked Questions</button></li>
               <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Reproduction Request Forms</a></li>
               <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">User Satisfaction Survey</a></li>
               <li><a href="#" className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light">Library Resources</a></li>
@@ -520,6 +600,8 @@ const Footer: React.FC<{ setScreen: (s: string) => void }> = ({ setScreen }) => 
             <h5 className="text-secondary text-xs uppercase tracking-[0.2em] font-bold mb-6">Special Collections</h5>
             <ul className="space-y-4">
               <li><button onClick={() => setScreen('mayors')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">NYC Mayors & Leadership</button></li>
+              <li><button onClick={() => setScreen('government')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Government & Policy</button></li>
+              <li><button onClick={() => setScreen('nycha')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">NYC Housing Authority (NYCHA)</button></li>
               <li><button onClick={() => setScreen('lgbtq')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">LGBTQ+ History Consortium</button></li>
               <li><button onClick={() => setScreen('calendars')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Historical Calendars</button></li>
               <li><button onClick={() => setScreen('collections')} className="text-sm text-on-surface/60 hover:text-secondary transition-colors font-light text-left">Queens Local History</button></li>
@@ -825,6 +907,7 @@ const HomeScreen: React.FC<{ setScreen: (s: string) => void, user: User | null, 
                   className="bg-surface p-12 hover:bg-surface-container-high transition-all duration-500 group cursor-pointer h-full" 
                   onClick={() => {
                     if (col.title === 'NYC Mayors & Leadership') setScreen('mayors');
+                    else if (col.title === 'Government & Policy') setScreen('government');
                     else setScreen('collections');
                   }}
                 >
@@ -1548,6 +1631,180 @@ const MayorsScreen = () => {
   );
 };
 
+const GovernmentScreen: React.FC<{ setScreen?: (s: string) => void }> = ({ setScreen }) => {
+  const [hoveredOrg, setHoveredOrg] = useState<string | null>(null);
+
+  const orgs = [
+    {
+      id: 'council',
+      name: 'The Council of the City of New York',
+      description: 'The legislative branch of New York City government. Our archives hold transcripts, legislative documents, and committee records documenting the City Council\'s role in municipal governanceDesde the early 20th century.',
+      image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/The-Council-of-the-City-of-New-York_v5gtmw.webp',
+      stats: { documents: '1.2M', range: '1938–Present' },
+      topics: ['Legislation', 'Municipal Budget', 'Land Use', 'Public Oversight']
+    },
+    {
+      id: 'nycha',
+      name: 'The New York City Housing Authority',
+      description: 'Established in 1934, NYCHA is the largest public housing authority in North America. The collection documents the evolution of social housing, urban renewal models, and tenant life through maps, plans, and photographs. Now available as a dedicated standalone archival portal.',
+      image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776708049/the_past_present_and_future_jgmejr.png',
+      stats: { documents: '450K', range: '1934–2010' },
+      topics: ['Social Housing', 'Urban Development', 'Public Policy', 'Tenant Rights']
+    },
+    {
+      id: 'rebny',
+      name: 'Real Estate Board of New York',
+      description: 'REBNY has been a central force in NYC\'s development for over a century. This archive tracks the influence of real estate interests on the city\'s physical and political landscape.',
+      image: 'https://res.cloudinary.com/dykuw1uvk/image/upload/v1776186231/AERIAL_VIEW_OF_BOTH_LIBERTY_ISLAND_AND_LOWER_MANHATTAN_sidbnx.webp',
+      stats: { documents: '220K', range: '1896–Present' },
+      topics: ['Real Estate', 'Zoning', 'Economic Growth', 'Lobbying']
+    }
+  ];
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-32 pb-24"
+    >
+      {/* Header Section */}
+      <section className="px-8 max-w-7xl mx-auto mb-20 relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row gap-16 items-center">
+          <div className="lg:w-1/2 relative z-10">
+            <span className="text-secondary text-[10px] uppercase tracking-[0.5em] font-bold mb-4 block">Civic & Administrative Records</span>
+            <h1 className="text-5xl md:text-7xl font-serif italic mb-8 leading-tight text-on-surface">Government & Policy</h1>
+            <p className="text-lg text-on-surface/60 font-light leading-relaxed mb-8 border-l-2 border-secondary/30 pl-8">
+              Exploring the machinery of municipal governance, City Council proceedings, and the evolution of public policy. This collection documents the organizations and interests that have architected NYC's social and physical reality.
+            </p>
+            <div className="flex gap-4">
+               <div className="bg-surface-container-high px-6 py-4 rounded-xl border border-white/5 space-y-1">
+                 <p className="text-[10px] uppercase tracking-widest text-on-surface/40">Total Collections</p>
+                 <p className="text-xl font-serif italic">03 Major Entities</p>
+               </div>
+               <div className="bg-surface-container-high px-6 py-4 rounded-xl border border-white/5 space-y-1">
+                 <p className="text-[10px] uppercase tracking-widest text-on-surface/40">Accessibility</p>
+                 <p className="text-xl font-serif italic text-secondary">Public Access</p>
+               </div>
+            </div>
+          </div>
+          <div className="lg:w-1/2 relative group">
+            <div className="absolute inset-0 bg-secondary/20 blur-[120px] rounded-full opacity-30 group-hover:opacity-50 transition-opacity"></div>
+            <div className="relative aspect-video rounded-3xl overflow-hidden border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+              <img 
+                src="https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&q=80&w=1000" 
+                alt="City Hall" 
+                className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:scale-105 group-hover:grayscale-0"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Organizations Grid */}
+      <section className="px-8 max-w-7xl mx-auto space-y-32">
+        {orgs.map((org, idx) => (
+          <motion.div 
+            key={org.id}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            onMouseEnter={() => setHoveredOrg(org.id)}
+            onMouseLeave={() => setHoveredOrg(null)}
+            className={cn(
+              "flex flex-col lg:flex-row gap-16 items-center group",
+              idx % 2 !== 0 && "lg:flex-row-reverse"
+            )}
+          >
+            <div className="lg:w-2/5 order-2 lg:order-none">
+              <div className="mb-6 flex items-center gap-4">
+                <span className="text-secondary font-mono text-sm">[ SECTION 0{idx + 1} ]</span>
+                <div className="h-px flex-1 bg-white/5"></div>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-serif italic mb-6 group-hover:text-secondary transition-colors underline-offset-8 decoration-1">
+                {org.name}
+              </h2>
+              <p className="text-sm text-on-surface/60 font-light leading-relaxed mb-8 italic">
+                {org.description}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                {org.topics.map(topic => (
+                  <div key={topic} className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-on-surface/40 hover:text-secondary transition-colors cursor-default">
+                    <div className="w-1.5 h-1.5 rounded-full bg-secondary/30" />
+                    {topic}
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-8 border-t border-white/5 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-secondary font-bold mb-1">{org.stats.documents} Documents</p>
+                  <p className="text-[10px] text-on-surface/30 font-mono tracking-tighter">{org.stats.range}</p>
+                </div>
+                <button 
+                  onClick={() => {
+                    if (org.id === 'nycha' && setScreen) setScreen('nycha');
+                    else if (setScreen) setScreen('collections');
+                  }}
+                  className={cn(
+                    "text-[10px] uppercase tracking-widest font-bold px-8 py-3 rounded-full transition-all flex items-center gap-2",
+                    org.id === 'nycha' 
+                      ? "bg-secondary text-on-secondary-container hover:brightness-110 shadow-lg shadow-secondary/20" 
+                      : "bg-white/5 hover:bg-secondary hover:text-on-secondary-container"
+                  )}
+                >
+                  {org.id === 'nycha' ? 'Open Standalone Archive' : 'Access Collection'} <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="lg:w-3/5 relative group/img">
+               <div className="absolute inset-0 bg-white/5 opacity-0 group-hover/img:opacity-100 transition-opacity z-10 pointer-events-none"></div>
+               <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
+                 <img 
+                   src={org.image} 
+                   alt={org.name} 
+                   className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:scale-110 group-hover:grayscale-0 brightness-75 group-hover:brightness-100"
+                   referrerPolicy="no-referrer"
+                 />
+                 <div className="absolute top-0 bottom-0 left-0 right-0 bg-gradient-to-tr from-background/40 to-transparent"></div>
+               </div>
+               
+               {/* Accent technical lines */}
+               <div className="absolute -top-4 -left-4 w-12 h-12 border-t border-l border-secondary/30 pointer-events-none"></div>
+               <div className="absolute -bottom-4 -right-4 w-12 h-12 border-b border-r border-secondary/30 pointer-events-none"></div>
+            </div>
+          </motion.div>
+        ))}
+      </section>
+
+      {/* Call to Research */}
+      <section className="mt-40 px-8 max-w-5xl mx-auto">
+        <div className="bg-surface-container-high p-16 rounded-[3rem] border border-white/10 text-center relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-secondary/5 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
+          <div className="relative z-10">
+            <h2 className="text-4xl font-serif italic mb-6">Research Inquiry</h2>
+            <p className="text-on-surface/60 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
+              These collections contain high-volume administrative data. For complex research projects involving municipal data sets or legislative history, we recommend scheduling an appointment with a specialist.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-secondary text-on-secondary-container px-12 py-4 text-[11px] uppercase tracking-[0.2em] font-bold hover:brightness-110 transition-all flex items-center justify-center gap-3">
+                Request Appointment <ArrowRight size={16} />
+              </button>
+              <button className="border border-white/10 px-12 py-4 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-white/5 transition-all text-on-surface/60">
+                Browse Finding Aids
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </motion.div>
+  );
+};
+
+
 const CalendarsScreen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
@@ -1716,7 +1973,7 @@ const CalendarsScreen = () => {
   );
 };
 
-const CollectionsScreen = () => {
+const CollectionsScreen: React.FC<{ setScreen?: (s: string) => void }> = ({ setScreen }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'names'>('grid');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -1724,7 +1981,7 @@ const CollectionsScreen = () => {
 
   const archivalCollections = [
     { id: 1, name: "Fiorello LaGuardia", category: "Mayoral", description: "The transformative documents of NYC's most iconic mayor, detailing the New Deal era and post-Depression recovery.", image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776191324/Fiorello_La_Guardia_jytulz.webp", note: "Legacy documents including personal correspondence and official records." },
-    { id: 2, name: "The New York City Housing Authority", category: "Community", description: "Records documenting the development of public housing in NYC.", image: "https://picsum.photos/seed/nycha/800/600?grayscale" },
+    { id: 2, name: "The New York City Housing Authority", category: "Community", description: "Records documenting the development of public housing in NYC, featuring over 450,000 documents, tenant files, and the Oversized Map Case blueprint collection.", image: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776708049/the_past_present_and_future_jgmejr.png" },
     { id: 3, name: "Queens Local History", category: "Community", description: "A vast collection of photographs and documents tracing the growth of the borough of Queens.", image: "https://picsum.photos/seed/queens/800/600?grayscale" },
     { id: 4, name: "Steinway & Sons", category: "Social", description: "The archives of the world-renowned piano manufacturer, based in Astoria, Queens.", image: "https://picsum.photos/seed/steinway/800/600?grayscale" },
     { id: 5, name: "The Council of the City of New York", category: "Political", description: "Legislative records and proceedings of the NYC Council.", image: "https://picsum.photos/seed/council/800/600?grayscale" },
@@ -1783,6 +2040,23 @@ const CollectionsScreen = () => {
           {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
             <section>
+              {selectedCollection.id === 2 && (
+                <div className="mb-8 p-6 bg-secondary/10 border border-secondary/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-secondary font-bold block mb-1">
+                      Standalone Dedicated Portal Available
+                    </span>
+                    <h4 className="text-lg font-serif italic text-on-surface">Explore the dedicated NYCHA Archival Portal</h4>
+                    <p className="text-xs text-on-surface/60 font-light mt-1">Includes the Oversized Map Case Blueprint repository, curated highlights, and format filters.</p>
+                  </div>
+                  <button 
+                    onClick={() => setScreen && setScreen('nycha')}
+                    className="bg-secondary text-on-secondary-container px-6 py-2.5 rounded-full text-xs font-mono uppercase tracking-widest font-bold whitespace-nowrap hover:brightness-110 transition-all flex items-center gap-2 flex-shrink-0"
+                  >
+                    Open Standalone Portal <ArrowRight size={14} />
+                  </button>
+                </div>
+              )}
               <h2 className="text-2xl font-serif italic mb-6">Collection Overview</h2>
               <p className="text-xl text-on-surface/70 font-light leading-relaxed">
                 {selectedCollection.description}
@@ -1917,7 +2191,10 @@ const CollectionsScreen = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedId(col.id)}
+                onClick={() => {
+                  if (col.id === 2 && setScreen) setScreen('nycha');
+                  else setSelectedId(col.id);
+                }}
                 className="group cursor-pointer bg-surface-container-low border border-white/5 hover:border-secondary/30 transition-all"
               >
                 <div className="aspect-[16/10] overflow-hidden relative">
@@ -1945,7 +2222,10 @@ const CollectionsScreen = () => {
             {archivalCollections.map((col) => (
               <button 
                 key={col.id}
-                onClick={() => setSelectedId(col.id)}
+                onClick={() => {
+                  if (col.id === 2 && setScreen) setScreen('nycha');
+                  else setSelectedId(col.id);
+                }}
                 className="flex items-center justify-between py-4 border-b border-white/5 group text-left"
               >
                 <span className="font-serif text-xl text-on-surface/60 group-hover:text-secondary transition-colors">{col.name}</span>
@@ -2211,22 +2491,118 @@ const AboutScreen = () => {
   );
 };
 
-const SearchScreen = () => {
+const SearchScreen = ({ initialSearchTerm = "" }: { initialSearchTerm?: string, key?: string }) => {
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [viewMode, setViewMode] = useState<'grid' | 'row'>('row');
+  const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [items, setItems] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+
+  // Update local search term when initialSearchTerm changes
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm);
+  }, [initialSearchTerm]);
+
+  // Enriched Mock Data
+  const mockItems = [
+    {
+      id: '1',
+      title: "Fiorello La Guardia at City Hall",
+      description: "Mayor La Guardia reading comics over the radio during the 1945 newspaper strike, a moment that defined his connection with the working class of New York.",
+      date: "1945-07-01",
+      collectionId: "NYC Mayors & Leadership",
+      format: "Photos",
+      borough: "Manhattan",
+      imageUrl: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776708049/the_past_present_and_future_jgmejr.png"
+    },
+    {
+      id: '2',
+      title: "NYCHA Post-War Development Plan",
+      description: "Original blueprints for the expansion of public housing in Queens, documenting the transition from tenement living to modern municipal housing standards.",
+      date: "1948-03-12",
+      collectionId: "Government & Policy",
+      format: "Documents",
+      borough: "Queens",
+      imageUrl: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776186231/AERIAL_VIEW_OF_BOTH_LIBERTY_ISLAND_AND_LOWER_MANHATTAN_sidbnx.webp"
+    },
+    {
+      id: '3',
+      title: "LGBTQ+ Rights Protest at Queens College",
+      description: "Documenting the early activism within the CUNY system, featuring student leaders who paved the way for the LGBTQ+ Consortium.",
+      date: "1972-10-15",
+      collectionId: "LGBTQ+ History Consortium",
+      format: "Photos",
+      borough: "Queens",
+      imageUrl: "https://picsum.photos/seed/pride/800/800?grayscale"
+    },
+    {
+      id: '4',
+      title: "Steinway & Sons Factory Workers",
+      description: "Oral history recording with a piano craftsman who worked in the Astoria factory for 40 years, detailing the labor conditions and guild culture.",
+      date: "1988-05-20",
+      collectionId: "Queens Local History",
+      format: "Oral History",
+      borough: "Queens",
+      imageUrl: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776775992/The-Council-of-the-City-of-New-York_v5gtmw.webp"
+    },
+    {
+      id: '5',
+      title: "City Council Transcripts: Urban Renewal",
+      description: "Legislative records from the 1950s City Council meetings regarding the displacement of communities for the construction of major expressways.",
+      date: "1954-11-02",
+      collectionId: "Government & Policy",
+      format: "Documents",
+      borough: "Manhattan",
+      imageUrl: "https://images.unsplash.com/photo-1555848962-6e79363ec58f?auto=format&fit=crop&q=80&w=1000"
+    },
+    {
+      id: '6',
+      title: "Flushing Meadows World's Fair Footage",
+      description: "Rare 16mm film reels capturing the 'World of Tomorrow' exhibit and the architectural landmarks that defined the 1939 World's Fair.",
+      date: "1939-06-21",
+      collectionId: "Queens Local History",
+      format: "Videos",
+      borough: "Queens",
+      imageUrl: "https://picsum.photos/seed/queens-fair/600/900?grayscale"
+    },
+    {
+      id: '7',
+      title: "La Guardia's personal Fedora",
+      description: "An authentic artifact from the Mayor's estate, currently preserved in our climate-controlled vault as part of the material history collection.",
+      date: "1940-01-01",
+      collectionId: "NYC Mayors & Leadership",
+      format: "Artifact",
+      borough: "Manhattan",
+      imageUrl: "https://res.cloudinary.com/dykuw1uvk/image/upload/v1776185492/Armed-Forces-Women_rdfk8v.webp"
+    }
+  ];
 
   useEffect(() => {
-    const q = query(collection(db, 'items'), orderBy('date', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'items'));
-    return () => unsubscribe();
+    // In a real app, this would be a Firestore listener
+    // For this demonstration, we use our enriched mock data
+    setItems(mockItems);
   }, []);
 
-  const filteredItems = items.filter(item => 
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCollection = selectedCollections.length === 0 || selectedCollections.includes(item.collectionId);
+    const matchesFormat = selectedFormats.length === 0 || selectedFormats.includes(item.format);
+    
+    return matchesSearch && matchesCollection && matchesFormat;
+  });
+
+  const toggleCollection = (colId: string) => {
+    setSelectedCollections(prev => 
+      prev.includes(colId) ? prev.filter(c => c !== colId) : [...prev, colId]
+    );
+  };
+
+  const toggleFormat = (format: string) => {
+    setSelectedFormats(prev => 
+      prev.includes(format) ? prev.filter(f => f !== format) : [...prev, format]
+    );
+  };
 
   return (
     <motion.div 
@@ -2252,9 +2628,9 @@ const SearchScreen = () => {
           </div>
         </div>
         <div className="mt-4 flex justify-center gap-6 text-sm text-on-surface/60">
-          <span>Trending: <span className="text-primary hover:underline cursor-pointer" onClick={() => setSearchTerm("La Guardia")}>Fiorello La Guardia</span></span>
-          <span><span className="text-primary hover:underline cursor-pointer" onClick={() => setSearchTerm("Wagner")}>Robert F. Wagner</span></span>
-          <span><span className="text-primary hover:underline cursor-pointer" onClick={() => setSearchTerm("Steinway")}>Steinway & Sons</span></span>
+          <span>Trending: <span className="text-secondary hover:underline cursor-pointer" onClick={() => setSearchTerm("La Guardia")}>Fiorello La Guardia</span></span>
+          <span><span className="text-secondary hover:underline cursor-pointer" onClick={() => setSearchTerm("NYCHA")}>NYCHA</span></span>
+          <span><span className="text-secondary hover:underline cursor-pointer" onClick={() => setSearchTerm("World's Fair")}>World's Fair</span></span>
         </div>
       </header>
 
@@ -2262,42 +2638,29 @@ const SearchScreen = () => {
         {/* Sidebar */}
         <aside className="space-y-10">
           <section>
-            <h3 className="text-lg mb-6 flex items-center gap-2 border-b border-outline-variant/20 pb-2">
-              <Calendar className="text-secondary" size={18} />
-              Date Range
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-outline-variant/10 pb-2 text-on-surface/80">
+              <BookOpen className="text-secondary" size={16} />
+              Collections
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs uppercase tracking-tighter text-on-surface/60">
-                <span>1880</span>
-                <span>2024</span>
-              </div>
-              <div className="h-1 bg-surface-container-highest rounded-full relative">
-                <div className="absolute h-full w-2/3 bg-secondary left-10 rounded-full"></div>
-                <div className="absolute w-4 h-4 bg-on-surface border-2 border-secondary rounded-full -top-1.5 left-10 cursor-pointer"></div>
-                <div className="absolute w-4 h-4 bg-on-surface border-2 border-secondary rounded-full -top-1.5 left-[75%] cursor-pointer"></div>
-              </div>
-              <div className="flex gap-2">
-                <input className="w-full bg-surface-container-low border-none text-sm py-2 px-3 rounded focus:ring-1 focus:ring-secondary outline-none" type="text" defaultValue="1930" />
-                <input className="w-full bg-surface-container-low border-none text-sm py-2 px-3 rounded focus:ring-1 focus:ring-secondary outline-none" type="text" defaultValue="1960" />
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="text-lg mb-6 flex items-center gap-2 border-b border-outline-variant/20 pb-2">
-              <Filter className="text-secondary" size={18} />
-              Topics
-            </h3>
-            <div className="space-y-2">
-              {['Politics & Government', 'LGBTQ+ History', "Women's Rights", 'Labor & Unions'].map((topic, i) => (
-                <label key={topic} className="flex items-center gap-3 group cursor-pointer">
+            <div className="space-y-3">
+              {[
+                'NYC Mayors & Leadership',
+                'Government & Policy',
+                'LGBTQ+ History Consortium',
+                'Queens Local History'
+              ].map((col) => (
+                <label key={col} className="flex items-center gap-3 group cursor-pointer">
                   <input 
                     type="checkbox" 
-                    defaultChecked={i === 2}
-                    className="rounded-sm bg-surface-container-highest border-none text-secondary focus:ring-0" 
+                    checked={selectedCollections.includes(col)}
+                    onChange={() => toggleCollection(col)}
+                    className="w-4 h-4 rounded-sm border-white/20 bg-white/5 text-secondary focus:ring-0 focus:ring-offset-0" 
                   />
-                  <span className={`text-sm transition-colors ${i === 2 ? 'text-secondary' : 'text-on-surface group-hover:text-secondary'}`}>
-                    {topic}
+                  <span className={cn(
+                    "text-xs transition-colors tracking-wide",
+                    selectedCollections.includes(col) ? 'text-secondary font-bold' : 'text-on-surface/60 group-hover:text-on-surface'
+                  )}>
+                    {col}
                   </span>
                 </label>
               ))}
@@ -2305,15 +2668,46 @@ const SearchScreen = () => {
           </section>
 
           <section>
-            <h3 className="text-lg mb-6 flex items-center gap-2 border-b border-outline-variant/20 pb-2">
-              <MapIcon className="text-secondary" size={18} />
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-outline-variant/10 pb-2 text-on-surface/80">
+              <FileText className="text-secondary" size={16} />
+              Format Type
+            </h3>
+            <div className="space-y-3">
+              {[
+                { id: 'Photos', label: 'Photographs' },
+                { id: 'Documents', label: 'Documents' },
+                { id: 'Videos', label: 'Videos' },
+                { id: 'Oral History', label: 'Oral Histories' },
+                { id: 'Artifact', label: 'Artifacts' }
+              ].map((format) => (
+                <label key={format.id} className="flex items-center gap-3 group cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={selectedFormats.includes(format.id)}
+                    onChange={() => toggleFormat(format.id)}
+                    className="w-4 h-4 rounded-sm border-white/20 bg-white/5 text-secondary focus:ring-0 focus:ring-offset-0" 
+                  />
+                  <span className={cn(
+                    "text-xs transition-colors tracking-wide",
+                    selectedFormats.includes(format.id) ? 'text-secondary font-bold' : 'text-on-surface/60 group-hover:text-on-surface'
+                  )}>
+                    {format.label}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="text-sm font-bold uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-outline-variant/10 pb-2 text-on-surface/80">
+              <MapIcon className="text-secondary" size={16} />
               Borough
             </h3>
-            <div className="grid grid-cols-2 gap-2">
-              {['Queens', 'Manhattan', 'Brooklyn', 'Bronx'].map((b, i) => (
+            <div className="flex flex-wrap gap-2">
+              {['Queens', 'Manhattan', 'Brooklyn', 'Bronx'].map((b) => (
                 <button 
                   key={b} 
-                  className={`py-2 rounded-full text-xs uppercase tracking-widest transition-colors ${i === 0 ? 'bg-secondary text-on-secondary-container' : 'bg-surface-container-highest text-on-surface hover:bg-surface-container-high'}`}
+                  className="px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest transition-all bg-surface-container-highest text-on-surface hover:bg-secondary hover:text-on-secondary-container"
                 >
                   {b}
                 </button>
@@ -2324,75 +2718,121 @@ const SearchScreen = () => {
 
         {/* Results */}
         <div className="space-y-8">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm text-on-surface/60 italic">Showing {filteredItems.length} results {searchTerm && `for "${searchTerm}"`}</span>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest">
-              <span className="text-on-surface/60">Sort by:</span>
-              <select className="bg-transparent border-none text-secondary focus:ring-0 cursor-pointer py-0 outline-none">
-                <option>Relevance</option>
-                <option>Date (Newest)</option>
-                <option>Date (Oldest)</option>
-              </select>
+          <div className="flex justify-between items-center bg-surface-container-low px-6 py-4 rounded-xl border border-white/5">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-on-surface/40 font-bold">
+              Found {filteredItems.length} records {searchTerm && (<span>for <span className="text-secondary italic">"{searchTerm}"</span></span>)}
+            </span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 border-r border-white/10 pr-6 mr-2">
+                <button 
+                  onClick={() => setViewMode('row')}
+                  className={cn("p-1.5 rounded transition-colors", viewMode === 'row' ? "bg-white/10 text-secondary border border-white/10" : "text-on-surface/40 hover:text-on-surface")}
+                >
+                  <LayoutList size={18} />
+                </button>
+                <button 
+                  onClick={() => setViewMode('grid')}
+                  className={cn("p-1.5 rounded transition-colors", viewMode === 'grid' ? "bg-white/10 text-secondary border border-white/10" : "text-on-surface/40 hover:text-on-surface")}
+                >
+                  <LayoutGrid size={18} />
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[9px] uppercase tracking-widest text-on-surface/30 font-bold">Sort</span>
+                <select className="bg-transparent border-none text-[10px] uppercase tracking-[0.2em] text-secondary focus:ring-0 cursor-pointer py-0 outline-none font-bold">
+                  <option>Relevance</option>
+                  <option>Date (Newest)</option>
+                  <option>Date (Oldest)</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          {filteredItems.length > 0 ? filteredItems.map((result, i) => (
-            <article key={i} className="group bg-surface-container-low p-6 rounded-lg transition-all hover:bg-surface-container-high relative overflow-hidden cursor-pointer">
-              <div className="flex flex-col md:flex-row gap-8">
-                <div className="w-full md:w-64 h-48 bg-surface-container-highest flex-shrink-0 rounded overflow-hidden">
+          <div className={cn(
+            "gap-6",
+            viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2" : "flex flex-col"
+          )}>
+            {filteredItems.length > 0 ? filteredItems.map((result, i) => (
+              <motion.article 
+                layout
+                key={result.id} 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn(
+                  "group relative overflow-hidden transition-all duration-500",
+                  viewMode === 'grid' 
+                    ? "bg-surface-container-low rounded-2xl border border-white/5 flex flex-col hover:bg-surface-container-high" 
+                    : "bg-surface-container-low p-6 rounded-xl flex flex-col md:flex-row gap-8 hover:bg-surface-container-high border border-white/5"
+                )}
+              >
+                <div className={cn(
+                  "bg-surface-container-highest overflow-hidden flex-shrink-0",
+                  viewMode === 'grid' ? "aspect-video w-full" : "w-full md:w-64 h-48 rounded-lg"
+                )}>
                   <img 
                     src={result.imageUrl} 
                     alt={result.title}
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 brightness-75 group-hover:brightness-100"
                     referrerPolicy="no-referrer"
                   />
                 </div>
-                <div className="flex-1 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <h2 className="text-2xl font-serif group-hover:text-primary transition-colors">{result.title}</h2>
-                    <Bookmark size={18} className="text-on-surface/40 hover:text-secondary transition-colors" />
+                <div className={cn(
+                  "flex-1 flex flex-col",
+                  viewMode === 'grid' ? "p-6" : "justify-center"
+                )}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h2 className="text-xl font-serif group-hover:text-secondary transition-colors italic leading-tight">{result.title}</h2>
+                    <Bookmark size={16} className="text-on-surface/20 hover:text-secondary transition-colors flex-shrink-0 ml-4" />
                   </div>
-                  <p className="text-on-surface/80 leading-relaxed line-clamp-3 font-light">
+                  <p className="text-xs text-on-surface/60 leading-relaxed line-clamp-2 font-light mb-auto">
                     {result.description}
                   </p>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 pt-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-on-surface/40">Date:</span>
-                      <span className="text-sm">{new Date(result.date).toLocaleDateString()}</span>
+                  
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-6 mt-4 border-t border-white/5">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase tracking-widest text-on-surface/30 font-bold">Year</span>
+                      <span className="text-[10px] font-mono text-on-surface/80">{new Date(result.date).getFullYear()}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-on-surface/40">Collection:</span>
-                      <span className="text-sm text-primary underline decoration-primary/20 underline-offset-4">{result.collectionId || "General Archive"}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase tracking-widest text-on-surface/30 font-bold">Collection</span>
+                      <span className="text-[10px] text-secondary font-medium tracking-tight italic">{result.collectionId}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase tracking-widest text-on-surface/40">Borough:</span>
-                      <span className="text-sm">{result.borough || "NYC"}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase tracking-widest text-on-surface/30 font-bold">Format</span>
+                      <span className="text-[10px] text-on-surface/60 font-bold tracking-widest">{result.format}</span>
                     </div>
                   </div>
                 </div>
+                {/* Visual accent */}
+                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-secondary scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500"></div>
+              </motion.article>
+            )) : (
+              <div className="py-32 text-center border-2 border-dashed border-outline-variant/10 rounded-3xl col-span-full">
+                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-on-surface/20">
+                  <Search size={32} />
+                </div>
+                <p className="text-on-surface/40 italic font-serif text-lg">No archival records found matching your current parameters.</p>
+                <button 
+                  onClick={() => { setSearchTerm(""); setSelectedCollections([]); setSelectedFormats([]); }}
+                  className="mt-6 text-secondary text-xs uppercase tracking-widest font-bold hover:underline"
+                >
+                  Clear all filters
+                </button>
               </div>
-              <div className="absolute left-0 top-0 w-[2px] h-0 bg-secondary transition-all duration-500 group-hover:h-full"></div>
-            </article>
-          )) : (
-            <div className="py-24 text-center border border-dashed border-outline-variant rounded-lg">
-              <p className="text-on-surface/40 italic">No items found matching your search.</p>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Pagination */}
-          <div className="flex justify-center items-center gap-4 pt-12">
-            <button className="p-2 text-on-surface/30 cursor-not-allowed"><ChevronLeft /></button>
-            <div className="flex gap-2">
-              <button className="w-10 h-10 rounded border border-secondary text-secondary font-medium">1</button>
-            </div>
-            <button className="p-2 text-on-surface/30 cursor-not-allowed"><ChevronRight /></button>
+          <div className="flex justify-center items-center gap-3 pt-12">
+            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 text-on-surface/30 transition-all hover:bg-white/5"><ChevronLeft size={16} /></button>
+            <button className="w-10 h-10 flex items-center justify-center rounded-lg bg-secondary text-on-secondary-container font-mono text-sm font-bold shadow-[0_0_15px_rgba(255,193,7,0.2)]">01</button>
+            <button className="w-10 h-10 flex items-center justify-center rounded-lg border border-white/10 text-on-surface/30 transition-all hover:bg-white/5"><ChevronRight size={16} /></button>
           </div>
         </div>
       </div>
     </motion.div>
   );
 };
-
 const LGBTQScreen = () => {
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -2770,6 +3210,115 @@ const DonateScreen = () => {
               </button>
             </div>
           </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+const FAQScreen = ({ setScreen }: { setScreen: (s: string) => void, key?: string }) => {
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  
+  const faqs = [
+    { 
+      category: "Visitor Information",
+      q: "Do I need an appointment to visit?", 
+      a: "Yes, research is by appointment only. Please use our appointment request form or contact an archivist directly to schedule your visit at least 48 hours in advance." 
+    },
+    { 
+      category: "Research Policy",
+      q: "Can I bring my own scanner or camera?", 
+      a: "Researchers are permitted to use their own digital cameras for reference photography, subject to staff approval and copyright restrictions. Flatbed scanners and handheld 'wand' scanners are not permitted." 
+    },
+    { 
+      category: "Services & Fees",
+      q: "How do I request a high-resolution reproduction?", 
+      a: "High-resolution digital reproductions can be requested for a fee. Please contact our Media & Reproductions department via the contact form with the specific document or photo ID." 
+    },
+    { 
+      category: "Services & Fees",
+      q: "Is there a fee for research services?", 
+      a: "Basic research assistance is provided free of charge. Extensive research requests or reproduction services may incur fees. Please consult our fee schedule for details." 
+    },
+    {
+      category: "Visitor Information",
+      q: "Where are you located?",
+      a: "We are located at LaGuardia Community College in Long Island City, Room C-768. The building is a short walk from the 33rd St station on the 7 line."
+    },
+    {
+      category: "Collections",
+      q: "What types of materials do you have?",
+      a: "Our collections focus on the social and political history of NYC, including the records of several mayors, NYCHA, Steinway & Sons, and extensive Queens local history."
+    }
+  ];
+
+  const categories = Array.from(new Set(faqs.map(f => f.category)));
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="pt-40 pb-24"
+    >
+      <div className="max-w-4xl mx-auto px-8">
+        <div className="mb-16">
+          <span className="text-secondary text-xs uppercase tracking-[0.3em] font-medium mb-4 block">Help Center</span>
+          <h1 className="text-5xl md:text-6xl font-serif italic mb-6 text-on-surface">Frequently Asked Questions</h1>
+          <p className="text-lg text-on-surface/60 font-light leading-relaxed">
+            Find answers to common questions about visiting our archives, conducting research, and accessing our digital collections.
+          </p>
+        </div>
+
+        <div className="space-y-12">
+          {categories.map((cat) => (
+            <div key={cat} className="space-y-4">
+              <h3 className="text-xs uppercase tracking-widest font-bold text-secondary border-b border-white/5 pb-2">{cat}</h3>
+              <div className="space-y-2">
+                {faqs.filter(f => f.category === cat).map((faq, idx) => {
+                  const globalIdx = faqs.indexOf(faq);
+                  return (
+                    <div key={globalIdx} className="bg-surface-container-low rounded-xl border border-white/5 overflow-hidden">
+                      <button 
+                        onClick={() => setExpandedFaq(expandedFaq === globalIdx ? null : globalIdx)}
+                        className="w-full p-6 flex items-center justify-between text-left group hover:bg-white/5 transition-colors"
+                      >
+                        <span className="font-serif text-lg">{faq.q}</span>
+                        <ChevronDown size={20} className={cn("text-on-surface/20 transition-transform duration-300", expandedFaq === globalIdx && "rotate-180 text-secondary")} />
+                      </button>
+                      <AnimatePresence>
+                        {expandedFaq === globalIdx && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-6 pb-6 text-on-surface/60 font-light leading-relaxed">
+                              {faq.a}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-20 p-12 bg-surface-container-high rounded-3xl border border-white/5 flex flex-col md:flex-row items-center gap-8 justify-between">
+          <div>
+            <h4 className="text-2xl font-serif italic mb-2">Still have questions?</h4>
+            <p className="text-on-surface/60 font-light">Our archivists are ready to help you with your research.</p>
+          </div>
+          <button 
+            onClick={() => setScreen('contact')}
+            className="bg-secondary text-on-secondary px-8 py-4 text-xs uppercase tracking-widest font-bold hover:brightness-110 transition-all"
+          >
+            Contact Support
+          </button>
         </div>
       </div>
     </motion.div>
@@ -3240,6 +3789,7 @@ const MediaScreen = () => {
 
 export default function App() {
   const [screen, setScreen] = useState('home');
+  const [globalSearchTerm, setGlobalSearchTerm] = useState("");
   const [user, setUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
 
@@ -3292,26 +3842,50 @@ export default function App() {
     <div className="min-h-screen bg-background selection:bg-secondary/30">
       <div className="fixed inset-0 grain-overlay z-50 pointer-events-none"></div>
       
-      <Navbar currentScreen={screen} setScreen={setScreen} user={user} login={login} logout={logout} />
+      <Navbar 
+        currentScreen={screen} 
+        setScreen={setScreen} 
+        user={user} 
+        login={login} 
+        logout={logout}
+        setGlobalSearchTerm={setGlobalSearchTerm}
+      />
       
       <main className="min-h-screen">
         <AnimatePresence mode="wait">
           {screen === 'home' && <HomeScreen key="home" setScreen={setScreen} user={user} login={login} />}
           {screen === 'about' && <AboutScreen key="about" />}
-          {screen === 'collections' && <CollectionsScreen key="collections" />}
+          {screen === 'collections' && <CollectionsScreen key="collections" setScreen={setScreen} />}
           {screen === 'mayors' && <MayorsScreen key="mayors" />}
+          {screen === 'government' && <GovernmentScreen key="government" setScreen={setScreen} />}
+          {screen === 'nycha' && <NychaScreen key="nycha" setScreen={setScreen} setGlobalSearchTerm={setGlobalSearchTerm} />}
           {screen === 'projects' && <ProjectsScreen key="projects" />}
-          {screen === 'search' && <SearchScreen key="search" />}
+          {screen === 'search' && <SearchScreen key="search" initialSearchTerm={globalSearchTerm} />}
           {screen === 'contact' && <ContactScreen key="contact" />}
           {screen === 'lgbtq' && <LGBTQScreen key="lgbtq" />}
           {screen === 'media' && <MediaScreen key="media" />}
           {screen === 'donate' && <DonateScreen key="donate" />}
           {screen === 'calendars' && <CalendarsScreen key="calendars" />}
           {screen === 'education' && <EducationProgramsScreen key="education" />}
+          {screen === 'faq' && <FAQScreen key="faq" setScreen={setScreen} />}
         </AnimatePresence>
       </main>
 
       <Footer setScreen={setScreen} />
+      
+      {/* Floating Help Button */}
+      <div className="fixed bottom-8 right-8 z-50">
+        <button 
+          onClick={() => setScreen('faq')}
+          className="w-14 h-14 bg-secondary text-on-secondary-container rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform group relative"
+          title="FAQ & Help"
+        >
+          <History size={24} className="group-hover:rotate-12 transition-transform" />
+          <div className="absolute right-full mr-4 bg-surface-container-high px-4 py-2 rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+            <span className="text-[10px] uppercase tracking-widest font-bold text-secondary">Need Help? Access FAQ</span>
+          </div>
+        </button>
+      </div>
     </div>
   );
 }
